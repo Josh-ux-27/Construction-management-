@@ -1,0 +1,223 @@
+index.html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contractor Board</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+<body>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <h1>Contractor Board</h1>
+      <p class="project-meta">Daily crew planning so field teams always know what to do next.</p>
+
+
+      <div class="task-counts">
+        <div class="count-chip">
+          <span class="metric-label">Total Tasks</span>
+          <span id="count-total" class="metric-value">0</span>
+        </div>
+        <div class="count-chip">
+          <span class="metric-label">Pending</span>
+          <span id="count-pending" class="metric-value">0</span>
+        </div>
+        <div class="count-chip">
+          <span class="metric-label">In Progress</span>
+          <span id="count-in-progress" class="metric-value">0</span>
+        </div>
+        <div class="count-chip">
+          <span class="metric-label">Completed</span>
+          <span id="count-completed" class="metric-value">0</span>
+        </div>
+      </div>
+
+      <div class="upload-section">
+        <h2>Manage crews</h2>
+        <div class="crew-control">
+          <input id="new-crew-name" type="text" placeholder="Add new crew..." />
+          <button type="button" id="add-crew-btn" class="small-button">Add Crew</button>
+        </div>
+        <div id="crews-list" class="crews-list"></div>
+      </div>
+
+      <div class="upload-section">
+        <h2>Site files</h2>
+        <label class="file-input-label">
+          Upload blueprint
+          <input id="blueprint-upload" type="file" accept="image/*,.pdf" />
+        </label>
+        <label class="file-input-label">
+          Upload 3D model
+          <input id="model-upload" type="file" accept=".glb,.gltf" />
+        </label>
+      </div>
+
+      <div class="upload-section">
+        <h2>Projects</h2>
+        <button type="button" id="open-project-modal-btn" class="primary-button">Create Project</button>
+      </div>
+
+      <div class="upload-section">
+        <h2>Tasks</h2>
+        <button type="button" id="open-task-modal-btn" class="primary-button">Create Task</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-header">
+        <div>
+          <h2>Schedule board</h2>
+          <p class="project-meta">Manage crew assignments, due times, and work status in one place.</p>
+        </div>
+        <div class="profile-menu">
+          <button id="profile-btn" class="profile-button" aria-expanded="false" aria-label="Open profile menu">
+            <span id="profile-avatar" class="profile-avatar">F</span>
+          </button>
+          <div id="profile-menu-items" class="profile-menu-items" hidden>
+            <div id="profile-name" class="profile-name">Contractor</div>
+            <button id="crew-site-link" class="profile-menu-link">View Crew Board</button>
+            <button id="logout-btn" class="profile-menu-link profile-menu-link--danger">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card">
+          <h3>Next priority</h3>
+          <p>Fix pending tasks first to keep the crew moving.</p>
+        </div>
+        <div class="card">
+          <h3>Timeline</h3>
+          <p>Morning shift schedule with start and completion tracking.</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <section>
+          <h3>Project list</h3>
+          <div id="project-list" class="task-list"></div>
+        </section>
+
+        <section class="map-panel">
+          <article class="map-card preview-card">
+            <h3>Blueprint and 3D model</h3>
+            <div class="preview-grid">
+              <figure class="preview-block">
+                <div id="blueprint-container" class="preview-image-wrap">
+                  <img id="blueprint-preview" class="preview-image" alt="Blueprint preview" />
+                  <iframe id="blueprint-pdf-preview" class="preview-pdf" hidden></iframe>
+                </div>
+                <figcaption>Blueprint preview</figcaption>
+                <button type="button" id="blueprint-preview-btn" class="secondary-button">Preview</button>
+                <button type="button" id="blueprint-clear-btn" class="secondary-button secondary-button--ghost">Remove</button>
+              </figure>
+              <figure class="preview-block model-block" style="position:relative">
+                <model-viewer id="model-viewer" class="model-viewer" alt="3D model preview" camera-controls auto-rotate></model-viewer>
+                <figcaption>3D model preview</figcaption>
+                <button type="button" id="model-preview-btn" class="secondary-button">Preview</button>
+                <button type="button" id="model-clear-btn" class="secondary-button secondary-button--ghost">Remove</button>
+              </figure>
+            </div>
+          </article>
+
+          <article class="map-card">
+            <h3>Shift notes</h3>
+            <label for="note-target-crew">Send note to</label>
+            <select id="note-target-crew" class="crew-select">
+              <option value="all">All crews</option>
+            </select>
+            <textarea id="shift-notes-input" class="shift-notes-input" rows="5" placeholder="Enter shift notes for crew..."></textarea>
+            <button type="button" id="save-shift-notes-btn" class="secondary-button">Send Note</button>
+            <p class="note-help">Only the contractor can edit these notes. Crew will see the latest update for their crew.</p>
+            <div id="shift-notes-log" class="shift-notes-log"></div>
+          </article>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <!-- Blueprint modal for large view -->
+  <div id="blueprint-modal" class="blueprint-modal" aria-hidden="true">
+    <div class="blueprint-modal-content">
+      <button id="blueprint-modal-close" class="modal-close">×</button>
+      <div id="blueprint-modal-wrap" class="preview-image-wrap">
+        <img id="blueprint-large" class="preview-image" alt="Blueprint large view" />
+        <iframe id="blueprint-modal-pdf" class="preview-pdf" hidden></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div id="task-modal" class="task-modal" aria-hidden="true">
+    <div class="task-modal-content">
+      <button id="task-modal-close" class="modal-close" aria-label="Close task form">×</button>
+      <h3>Create Task</h3>
+      <form id="task-form" class="task-form">
+        <label for="task-title">Task</label>
+        <input id="task-title" name="title" type="text" placeholder="Install outlets" required />
+
+        <label for="task-location">Location</label>
+        <input id="task-location" name="location" type="text" placeholder="Room 101" required />
+
+        <label for="task-project">Project</label>
+        <select id="task-project" name="project" required>
+          <option value="">Select a project...</option>
+        </select>
+
+        <label for="task-crew-type">Crew type</label>
+        <input id="task-crew-type" name="crewType" type="text" placeholder="Electrical / Plumbing" required />
+
+        <label for="task-assigned-crew">Assign crew</label>
+        <select id="task-assigned-crew" name="assignedCrew" required>
+          <option value="">Select a crew...</option>
+        </select>
+
+        <label for="task-due">Due time</label>
+        <input id="task-due" name="due" type="time" required />
+
+        <label for="task-note">Notes</label>
+        <textarea id="task-note" name="note" rows="3" placeholder="Lockout required before removing fixtures"></textarea>
+
+        <div class="task-modal-actions">
+          <button type="button" id="task-modal-cancel" class="secondary-button">Cancel</button>
+          <button type="submit" class="primary-button">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="project-modal" class="task-modal" aria-hidden="true">
+    <div class="task-modal-content">
+      <button id="project-modal-close" class="modal-close" aria-label="Close project form">×</button>
+      <h3>Create Project</h3>
+      <form id="project-form" class="task-form">
+        <label for="project-company">Company Name</label>
+        <input id="project-company" name="company" type="text" placeholder="Enter company name" required />
+
+        <label for="project-title">Project Name</label>
+        <input id="project-title" name="title" type="text" placeholder="Enter project name" required />
+
+        <label for="project-description">Description</label>
+        <textarea id="project-description" name="description" rows="3" placeholder="Add project description"></textarea>
+
+        <label for="project-location">Location</label>
+        <input id="project-location" name="location" type="text" placeholder="Enter project location" />
+
+        <label for="project-budget">Budget (optional)</label>
+        <input id="project-budget" name="budget" type="number" placeholder="Enter project budget" />
+
+        <div class="task-modal-actions">
+          <button type="button" id="project-modal-cancel" class="secondary-button">Cancel</button>
+          <button type="submit" class="primary-button">Create Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

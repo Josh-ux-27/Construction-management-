@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction App - Contractor Detail</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo-section">
+        <h1>Contractor Page</h1>
+        <p>Review contractor details and projects.</p>
+      </div>
+
+      <div class="status-section">
+        <h2>Overview</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Projects</span>
+            <span id="count-projects" class="status-number">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Tasks</span>
+            <span id="count-tasks" class="status-number">0</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-header">
+        <div>
+          <h2 id="contractor-title">Contractor</h2>
+          <p id="contractor-subtitle" class="project-meta">Loading contractor details...</p>
+        </div>
+
+        <div class="profile-menu">
+          <button id="profile-btn" class="profile-button" aria-expanded="false" aria-label="Open profile menu">
+            <span id="profile-avatar" class="profile-avatar">PM</span>
+          </button>
+          <div id="profile-menu-items" class="profile-menu-items" hidden>
+            <div id="profile-name" class="profile-name">Project Manager</div>
+            <button id="back-to-manager-btn" class="profile-menu-link">Back to Manager</button>
+            <button id="logout-btn" class="profile-menu-link profile-menu-link--danger">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card">
+          <h3>Contractor profile</h3>
+          <p id="contractor-company-label">Company details will show here.</p>
+        </div>
+        <div class="card">
+          <h3>Project access</h3>
+          <p>Review and manage this contractor's project list.</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <section>
+          <h3>Project list</h3>
+          <form id="project-form" class="task-form">
+            <label for="project-title">Project name</label>
+            <input id="project-title" type="text" placeholder="Enter project name" required />
+
+            <label for="project-notes">Notes</label>
+            <textarea id="project-notes" rows="3" placeholder="Add project notes"></textarea>
+
+            <button type="submit" class="primary-button">Add Project</button>
+          </form>
+          <div id="project-list" class="crews-list"></div>
+        </section>
+
+        <section>
+          <h3>Task overview</h3>
+          <p class="project-meta" style="margin-top:0; margin-bottom:14px;">Read-only view of the shared task board.</p>
+          <div id="task-overview" class="task-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="contractor-detail.js"></script>
+</body>
+</html>

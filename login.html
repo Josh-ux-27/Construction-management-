@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction App - Login</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .login-card h1 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      color: #0f1729;
+    }
+
+    .login-card p {
+      margin: 0 0 32px 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .auth-view {
+      display: none;
+    }
+
+    .auth-view.active {
+      display: block;
+    }
+
+    .login-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .login-tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      color: #94a3b8;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .login-tab.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+
+    .login-form {
+      display: none;
+    }
+
+    .login-form.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #1e293b;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .password-field {
+      position: relative;
+    }
+
+    .password-field input {
+      padding-right: 44px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 16px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .password-toggle:hover {
+      color: #2563eb;
+    }
+
+    .login-button {
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .login-button:hover {
+      background: #1d4ed8;
+    }
+
+    .login-button:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      color: #dc2626;
+      font-size: 14px;
+      margin-top: 12px;
+      padding: 10px;
+      background: #fee2e2;
+      border-radius: 6px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .account-create {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .account-create h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: #0f1729;
+    }
+
+    .account-create select,
+    .account-create input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .auth-switch {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    .auth-switch button {
+      border: none;
+      background: transparent;
+      color: #2563eb;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <h1>Construction App</h1>
+      <p>Site management and crew coordination</p>
+
+      <div id="signin-view" class="auth-view active">
+        <div class="login-tabs">
+          <button class="login-tab active" data-role="contractor">Contractor</button>
+          <button class="login-tab" data-role="crew">Crew Member</button>
+          <button class="login-tab" data-role="manager">Project Manager</button>
+        </div>
+
+        <!-- Contractor login -->
+        <form id="contractor-form" class="login-form active" onsubmit="handleContractorLogin(event)">
+          <div class="form-group">
+            <label for="contractor-email">Email</label>
+            <input id="contractor-email" type="email" placeholder="Enter account email" required />
+          </div>
+          <div class="form-group">
+            <label for="contractor-password">Password</label>
+            <div class="password-field">
+              <input id="contractor-password" type="password" placeholder="Enter password" required />
+              <button type="button" class="password-toggle" data-target="contractor-password" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="login-button">Sign In as Contractor</button>
+          <div id="contractor-error" class="error-message"></div>
+        </form>
+
+        <!-- Manager login -->
+        <form id="manager-form" class="login-form" onsubmit="handleManagerLogin(event)">
+          <div class="form-group">
+            <label for="manager-email">Email</label>
+            <input id="manager-email" type="email" placeholder="Enter account email" required />
+          </div>
+          <div class="form-group">
+            <label for="manager-password">Password</label>
+            <div class="password-field">
+              <input id="manager-password" type="password" placeholder="Enter password" required />
+              <button type="button" class="password-toggle" data-target="manager-password" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="login-button">Sign In as Project Manager</button>
+          <div id="manager-error" class="error-message"></div>
+        </form>
+
+        <!-- Crew login -->
+        <form id="crew-form" class="login-form" onsubmit="handleCrewLogin(event)">
+          <div class="form-group">
+            <label for="crew-email">Email</label>
+            <input id="crew-email" type="email" placeholder="Enter account email" required />
+          </div>
+          <div class="form-group">
+            <label for="crew-password">Password</label>
+            <div class="password-field">
+              <input id="crew-password" type="password" placeholder="Enter password" required />
+              <button type="button" class="password-toggle" data-target="crew-password" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="login-button">Sign In as Crew Member</button>
+          <div id="crew-error" class="error-message"></div>
+        </form>
+
+        <div class="auth-switch">
+          Don't have an account? <button type="button" id="show-signup-btn">Sign up</button>
+        </div>
+      </div>
+
+      <div id="signup-view" class="auth-view">
+        <div class="account-create">
+          <h3>Create Account</h3>
+          <form id="create-account-form" onsubmit="handleCreateAccount(event)">
+            <div class="form-group">
+              <label for="new-role">Role</label>
+              <select id="new-role" required>
+                <option value="contractor">Contractor</option>
+                <option value="crew">Crew Member</option>
+                <option value="manager">Project Manager</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="new-company">Company name</label>
+              <input id="new-company" type="text" placeholder="Enter your company name" required />
+            </div>
+            <div class="form-group">
+              <label for="new-email">Email</label>
+              <input id="new-email" type="email" placeholder="Enter your email address" required />
+            </div>
+            <div class="form-group">
+              <label for="new-password">Password</label>
+              <div class="password-field">
+                <input id="new-password" type="password" placeholder="Create a password" minlength="12" required />
+                <button type="button" class="password-toggle" data-target="new-password" aria-label="Show password">👁</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="confirm-password">Confirm password</label>
+              <div class="password-field">
+                <input id="confirm-password" type="password" placeholder="Confirm password" minlength="12" required />
+                <button type="button" class="password-toggle" data-target="confirm-password" aria-label="Show password">👁</button>
+              </div>
+            </div>
+            <button type="submit" class="login-button">Create Account</button>
+            <div id="create-account-error" class="error-message"></div>
+          </form>
+        </div>
+
+        <div class="auth-switch">
+          Already have an account? <button type="button" id="show-signin-btn">Sign in</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script>
+    const TOKEN_STORAGE_KEY = 'authToken';
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    document.querySelectorAll('.password-toggle').forEach(button => {
+      button.addEventListener('click', () => {
+        const targetId = button.dataset.target;
+        const input = document.getElementById(targetId);
+        if (!input) return;
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        button.textContent = isPassword ? '👁' : '👁';
+        button.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+      });
+    });
+
+    localStorage.removeItem('currentUser');
+    // Keep supabase token storage managed by supabase-js.
+    localStorage.removeItem('savedUser');
+    localStorage.removeItem('lastLogoutTime');
+    sessionStorage.removeItem('currentSessionId');
+
+    const tabs = document.querySelectorAll('.login-tab');
+    const forms = document.querySelectorAll('.login-form');
+    const signInView = document.getElementById('signin-view');
+    const signUpView = document.getElementById('signup-view');
+    const showSignupBtn = document.getElementById('show-signup-btn');
+    const showSigninBtn = document.getElementById('show-signin-btn');
+
+    function showSignInView() {
+      signInView.classList.add('active');
+      signUpView.classList.remove('active');
+    }
+
+    function showSignUpView() {
+      signInView.classList.remove('active');
+      signUpView.classList.add('active');
+    }
+
+    if (showSignupBtn) {
+      showSignupBtn.addEventListener('click', () => {
+        showSignUpView();
+      });
+    }
+
+    if (showSigninBtn) {
+      showSigninBtn.addEventListener('click', () => {
+        showSignInView();
+      });
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const role = tab.dataset.role;
+        showSignInView();
+        
+        // Update active tab
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active form
+        forms.forEach(f => f.classList.remove('active'));
+        document.getElementById(`${role}-form`).classList.add('active');
+      });
+    });
+
+    function showError(errorElement, message) {
+      errorElement.textContent = message;
+      errorElement.classList.add('show');
+    }
+
+    function clearError(errorElement) {
+      errorElement.textContent = '';
+      errorElement.classList.remove('show');
+      errorElement.style.color = '#dc2626';
+      errorElement.style.background = '#fee2e2';
+    }
+
+    function completeSignIn(role, foundUser) {
+      const sessionId = crypto.randomUUID();
+      const user = {
+        id: foundUser.id,
+        role: foundUser.role,
+        email: foundUser.email,
+        company: foundUser.company,
+        loginTime: new Date().getTime(),
+        sessionId,
+      };
+
+      localStorage.setItem(TOKEN_STORAGE_KEY, 'supabase-session');
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.removeItem('savedUser');
+      localStorage.removeItem('lastLogoutTime');
+      sessionStorage.setItem('currentSessionId', sessionId);
+
+      if (role === 'contractor') {
+        window.location.href = 'index.1.3.1.html';
+      } else if (role === 'crew') {
+        window.location.href = 'crew.html';
+      } else {
+        window.location.href = 'manager.html';
+      }
+    }
+
+    async function signInWithAccount(role, email, password, errorDiv) {
+      clearError(errorDiv);
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!isValidEmail(normalizedEmail)) {
+        showError(errorDiv, 'Please enter a valid email address.');
+        return;
+      }
+
+      try {
+        const result = await window.supabaseApp.signInWithRole({ role, email: normalizedEmail, password });
+        if (result.profile.role !== role) {
+          await window.supabaseApp.signOut();
+          const actualRoleLabel = result.profile.role === 'crew'
+            ? 'crew member'
+            : result.profile.role === 'manager'
+              ? 'project manager'
+              : 'contractor';
+          showError(errorDiv, `This email belongs to a ${actualRoleLabel} account. Supabase only supports one account per email, so use a different email for each role.`);
+          return;
+        }
+        completeSignIn(result.profile.role, result.profile);
+      } catch (e) {
+        showError(errorDiv, e.message || 'Invalid email or password');
+      }
+    }
+
+    async function handleContractorLogin(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('contractor-email').value.trim();
+      const password = document.getElementById('contractor-password').value.trim();
+      const errorDiv = document.getElementById('contractor-error');
+
+      await signInWithAccount('contractor', email, password, errorDiv);
+    }
+
+    async function handleCrewLogin(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('crew-email').value.trim();
+      const password = document.getElementById('crew-password').value.trim();
+      const errorDiv = document.getElementById('crew-error');
+
+      await signInWithAccount('crew', email, password, errorDiv);
+    }
+
+    async function handleManagerLogin(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('manager-email').value.trim();
+      const password = document.getElementById('manager-password').value.trim();
+      const errorDiv = document.getElementById('manager-error');
+
+      await signInWithAccount('manager', email, password, errorDiv);
+    }
+
+    function handleCreateAccount(event) {
+      event.preventDefault();
+
+      const role = document.getElementById('new-role').value;
+      const company = document.getElementById('new-company').value.trim();
+      const email = document.getElementById('new-email').value.trim().toLowerCase();
+      const password = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const errorDiv = document.getElementById('create-account-error');
+      const createForm = document.getElementById('create-account-form');
+
+      clearError(errorDiv);
+
+      if (!company) {
+        showError(errorDiv, 'Please enter your company name.');
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showError(errorDiv, 'Please enter a valid email address.');
+        return;
+      }
+
+      if (password.length < 12) {
+        showError(errorDiv, 'Password must be at least 12 characters.');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showError(errorDiv, 'Passwords do not match.');
+        return;
+      }
+
+      window.supabaseApp.signUpWithRole({ role, company, email, password }).then((result) => {
+        createForm.reset();
+        if (!result.session) {
+          showError(errorDiv, 'Account created. Please check your email confirmation settings or sign in again.');
+          showSignInView();
+          return;
+        }
+        completeSignIn(role, result.profile);
+      }).catch((e) => {
+        showError(errorDiv, e.message || 'Unable to create account.');
+      });
+    }
+
+    function checkExistingLogin() {
+      window.supabaseApp.restoreSession().then((result) => {
+        if (!result) return;
+        completeSignIn(result.profile.role, result.profile);
+      }).catch(() => {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+      });
+    }
+
+    checkExistingLogin();
+  </script>
+</body>
+</html>

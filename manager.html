@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction App - Manager Board</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo-section">
+        <h1>Manager Board</h1>
+        <p>Keep tabs on contractors and project performance.</p>
+      </div>
+
+      <div class="status-section">
+        <h2>Overview</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Contractors</span>
+            <span id="count-contractors" class="status-number">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Crews</span>
+            <span id="count-crews" class="status-number">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Tasks</span>
+            <span id="count-tasks" class="status-number">0</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-header">
+        <div>
+          <h2>Project Manager</h2>
+          <p class="project-meta">Manage contractor teams and track overall project progress.</p>
+        </div>
+
+        <div class="profile-menu">
+          <button id="profile-btn" class="profile-button" aria-expanded="false" aria-label="Open profile menu">
+            <span id="profile-avatar" class="profile-avatar">M</span>
+          </button>
+          <div id="profile-menu-items" class="profile-menu-items" hidden>
+            <div id="profile-name" class="profile-name">Project Manager</div>
+            <button id="logout-btn" class="profile-menu-link profile-menu-link--danger">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card">
+          <h3>Contractor network</h3>
+          <p>Track multiple contractors and active crew engagement from one place.</p>
+        </div>
+        <div class="card">
+          <h3>Project health</h3>
+          <p>Monitor tasks and crew capacity to keep timelines on target.</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <section>
+          <h3>Find project</h3>
+          <form id="project-search-form" class="task-form">
+            <label for="search-company-name">Company name</label>
+            <input id="search-company-name" type="text" placeholder="Enter company name" required />
+
+            <label for="search-project-name">Project name</label>
+            <input id="search-project-name" type="text" placeholder="Enter project name" required />
+
+            <button type="submit" class="primary-button">Find Project</button>
+          </form>
+
+          <h4 style="margin:0 0 10px 0;">Search results</h4>
+          <div id="project-search-results" class="crews-list"></div>
+
+          <h4 style="margin:12px 0 10px 0;">Project list</h4>
+          <div id="manager-project-list" class="crews-list"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="manager-script.js"></script>
+</body>
+</html>

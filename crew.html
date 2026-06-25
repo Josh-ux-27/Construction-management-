@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Construction Crew - Task Board</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="logo-section">
+        <h1>Crew Board</h1>
+        <p>Real-time task tracking for team members</p>
+      </div>
+
+      <div class="crew-selector">
+        <h2>Select your crew</h2>
+        <select id="crew-select" class="crew-select">
+          <option value="all">All Tasks</option>
+        </select>
+      </div>
+
+      <div class="status-section">
+        <h2>Shift Status</h2>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">Total</span>
+            <span id="count-total" class="status-number">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Pending</span>
+            <span id="count-pending" class="status-number">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">In Progress</span>
+            <span id="count-in-progress" class="status-number">0</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Done</span>
+            <span id="count-completed" class="status-number">0</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-header">
+        <div>
+          <h2>Team Task Board</h2>
+          <p class="project-meta">Current assignments and project status for all crew members.</p>
+        </div>
+        <div class="profile-menu">
+          <button id="profile-btn" class="profile-button" aria-expanded="false" aria-label="Open profile menu">
+            <span id="profile-avatar" class="profile-avatar">C</span>
+          </button>
+          <div id="profile-menu-items" class="profile-menu-items" hidden>
+            <div id="profile-name" class="profile-name">Crew member</div>
+            <button id="foreman-link" class="profile-menu-link" style="display:none;">Contractor Board</button>
+            <button id="logout-btn" class="profile-menu-link profile-menu-link--danger">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card">
+          <h3>Next priority</h3>
+          <p>Focus on pending tasks to keep the project on schedule.</p>
+        </div>
+        <div class="card">
+          <h3>Check-in</h3>
+          <p>Update task status as you progress through the day.</p>
+        </div>
+        <div class="card">
+          <h3>Safety first</h3>
+          <p>Review blueprints and models before starting any task.</p>
+        </div>
+      </div>
+
+      <section class="panel">
+        <section>
+          <h3>Task list</h3>
+          <div id="task-list" class="task-list"></div>
+        </section>
+
+        <section class="map-panel">
+          <article class="map-card preview-card">
+            <h3>Blueprint and 3D model</h3>
+            <div class="preview-grid">
+              <figure class="preview-block">
+                <div id="blueprint-container" class="preview-image-wrap">
+                  <img id="blueprint-preview" class="preview-image" alt="Blueprint preview" />
+                  <iframe id="blueprint-pdf-preview" class="preview-pdf" hidden></iframe>
+                </div>
+                <figcaption>Blueprint preview</figcaption>
+                <button type="button" id="blueprint-fullscreen-btn" class="secondary-button">View Fullscreen</button>
+              </figure>
+              <figure class="preview-block model-block" style="position:relative">
+                <model-viewer id="model-viewer" class="model-viewer" alt="3D model preview" camera-controls auto-rotate></model-viewer>
+                <figcaption>3D model preview</figcaption>
+              </figure>
+            </div>
+          </article>
+
+          <article class="map-card">
+            <h3>Notes</h3>
+            <div id="shift-notes" class="shift-notes-display">No notes available. Check back for updates from the contractor.</div>
+          </article>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <!-- Blueprint modal for large view -->
+  <div id="blueprint-modal" class="blueprint-modal" aria-hidden="true">
+    <div class="blueprint-modal-content">
+      <button id="blueprint-modal-close" class="modal-close">×</button>
+      <div id="blueprint-modal-wrap" class="preview-image-wrap">
+        <img id="blueprint-large" class="preview-image" alt="Blueprint large view" />
+        <iframe id="blueprint-modal-pdf" class="preview-pdf" hidden></iframe>
+        <div id="blueprint-modal-click-overlay" class="click-overlay" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="crew-script.js"></script>
+</body>
+</html>
