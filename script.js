@@ -75,6 +75,8 @@ function scheduleCompletedTaskRemoval(taskId, ownerId) {
 function clearAuthAndRedirect(reason = '') {
   localStorage.removeItem('authToken');
   localStorage.removeItem('currentUser');
+  sessionStorage.removeItem('authToken');
+  sessionStorage.removeItem('currentUser');
   sessionStorage.removeItem('currentSessionId');
   const loginUrl = reason ? `login.html?authError=${encodeURIComponent(reason)}` : 'login.html';
   window.location.href = loginUrl;
