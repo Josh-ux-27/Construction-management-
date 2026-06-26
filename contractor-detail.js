@@ -4,7 +4,7 @@
     const restored = await window.supabaseApp.requireRole('manager');
     const userData = restored.profile;
     const sessionId = crypto.randomUUID();
-    localStorage.setItem('currentUser', JSON.stringify({
+    sessionStorage.setItem('currentUser', JSON.stringify({
       id: userData.id,
       role: userData.role,
       email: userData.email,
@@ -259,9 +259,22 @@
       }
     });
   } catch (e) {
+    const message = String(e?.message || '');
+    if (message.includes('No active session') || message.includes('Role not allowed')) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('currentUser');
+      sessionStorage.removeItem('authToken');
+      sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('currentSessionId');
+      window.location.href = 'login.html?authError=session';
+      return;
+    }
+
+    console.error('Contractor detail initialization failed:', e);
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('currentUser');
     sessionStorage.removeItem('currentSessionId');
-    window.location.href = 'login.html';
   }
 })();
