@@ -48,11 +48,14 @@ function scheduleCompletedTaskRemoval(taskId, ownerId) {
   completionTimers.set(taskId, timerId);
 }
 
-function clearAuthAndRedirect() {
+function clearAuthAndRedirect(reason = '') {
   localStorage.removeItem('authToken');
   localStorage.removeItem('currentUser');
+  sessionStorage.removeItem('authToken');
+  sessionStorage.removeItem('currentUser');
   sessionStorage.removeItem('currentSessionId');
-  window.location.href = 'login.html';
+  const loginUrl = reason ? `login.html?authError=${encodeURIComponent(reason)}` : 'login.html';
+  window.location.href = loginUrl;
 }
 
 function renderShiftNotesForCrew() {
@@ -326,8 +329,18 @@ async function init() {
         // Silent refresh retry.
       });
     }, 8000);
-  } catch (_error) {
-    clearAuthAndRedirect();
+  } catch (error) {
+    const message = String(error?.message || '');
+    if (message.includes('No active session') || message.includes('Role not allowed')) {
+      clearAuthAndRedirect('session');
+      return;
+    }
+
+    if (taskList) {
+      taskList.innerHTML = '<div class="no-tasks">Unable to load crew board right now. Please refresh in a moment.</div>';
+    }
+
+    console.error('Crew board initialization failed:', error);
   }
 }
 
