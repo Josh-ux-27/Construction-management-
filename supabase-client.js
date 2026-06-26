@@ -291,6 +291,118 @@
     };
   }
 
+  async function loadManagerData(managerId) {
+    const client = getClient();
+    const accessRes = await client
+      .from('manager_project_access')
+      .select('project_id')
+      .eq('manager_id', managerId);
+
+    if (accessRes.error) throw accessRes.error;
+
+    const selectedProjectIds = Array.from(new Set((accessRes.data || []).map((row) => row.project_id).filter(Boolean)));
+    if (!selectedProjectIds.length) {
+      return {
+        selectedProjectIds: [],
+        projects: [],
+        crews: [],
+        tasks: [],
+      };
+    }
+
+    const [projectsRes, tasksRes] = await Promise.all([
+      client.from('projects').select('*').in('id', selectedProjectIds).order('created_at', { ascending: false }),
+      client.from('tasks').select('*').in('project_id', selectedProjectIds).order('created_at', { ascending: false }),
+    ]);
+
+    if (projectsRes.error) throw projectsRes.error;
+    if (tasksRes.error) throw tasksRes.error;
+
+    const ownerIds = Array.from(new Set((projectsRes.data || []).map((project) => project.owner_id).filter(Boolean)));
+    let crewsRes = { data: [], error: null };
+    if (ownerIds.length) {
+      crewsRes = await client.from('crews').select('*').in('owner_id', ownerIds).order('created_at', { ascending: true });
+    }
+
+    if (crewsRes.error) throw crewsRes.error;
+
+    return {
+      selectedProjectIds,
+      projects: (projectsRes.data || []).map((p) => ({
+        id: p.id,
+        ownerId: p.owner_id,
+        companyName: p.company_name,
+        title: p.title,
+        description: p.description || '',
+        location: p.location || '',
+        budget: p.budget,
+        createdAt: p.created_at ? Date.parse(p.created_at) : Date.now(),
+      })),
+      crews: (crewsRes.data || []).map((c) => ({
+        id: c.id,
+        ownerId: c.owner_id,
+        name: c.name,
+        createdAt: c.created_at ? Date.parse(c.created_at) : Date.now(),
+      })),
+      tasks: (tasksRes.data || []).map((t) => ({
+        id: t.id,
+        ownerId: t.owner_id,
+        title: t.title,
+        location: t.location,
+        projectId: t.project_id,
+        projectTitle: t.project_title || '',
+        crewId: t.crew_id || '',
+        crewType: t.crew_type || '',
+        note: t.note || '',
+        due: t.due || '',
+        status: t.status || 'pending',
+        createdAt: t.created_at ? Date.parse(t.created_at) : Date.now(),
+      })),
+    };
+  }
+
+  async function searchProjects(companyName, projectName) {
+    const client = getClient();
+    const companyFilter = String(companyName || '').trim().toLowerCase();
+    const projectFilter = String(projectName || '').trim().toLowerCase();
+    const { data, error } = await client.rpc('manager_search_projects', {
+      company_term: companyFilter,
+      project_term: projectFilter,
+    });
+    if (error) throw error;
+
+    return (data || []).map((p) => ({
+      id: p.id,
+      ownerId: p.owner_id,
+      companyName: p.company_name,
+      title: p.title,
+      description: p.description || '',
+      location: p.location || '',
+      budget: p.budget,
+      createdAt: p.created_at ? Date.parse(p.created_at) : Date.now(),
+    }));
+  }
+
+  async function addManagerProject(managerId, projectId) {
+    const client = getClient();
+    const { error } = await client.from('manager_project_access').insert({
+      manager_id: managerId,
+      project_id: projectId,
+      created_at: new Date().toISOString(),
+    });
+    if (error && error.code !== '23505') throw error;
+  }
+
+  async function removeManagerProject(managerId, projectId) {
+    const client = getClient();
+    const { error } = await client
+      .from('manager_project_access')
+      .delete()
+      .eq('manager_id', managerId)
+      .eq('project_id', projectId);
+    if (error) throw error;
+  }
+
   async function loadCrewBoardData() {
     const client = getClient();
     const [core, notesRes, assetsRes] = await Promise.all([
@@ -440,6 +552,10 @@
     fetchProfile,
     loadOwnerData,
     loadAllData,
+    loadManagerData,
+    searchProjects,
+    addManagerProject,
+    removeManagerProject,
     loadCrewBoardData,
     createCrew,
     deleteCrew,
