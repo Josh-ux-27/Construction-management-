@@ -72,11 +72,12 @@ function scheduleCompletedTaskRemoval(taskId, ownerId) {
   completionTimers.set(taskId, timerId);
 }
 
-function clearAuthAndRedirect() {
+function clearAuthAndRedirect(reason = '') {
   localStorage.removeItem('authToken');
   localStorage.removeItem('currentUser');
   sessionStorage.removeItem('currentSessionId');
-  window.location.href = 'login.html';
+  const loginUrl = reason ? `login.html?authError=${encodeURIComponent(reason)}` : 'login.html';
+  window.location.href = loginUrl;
 }
 
 function getCurrentContractorId() {
@@ -722,8 +723,19 @@ async function init() {
         // Silent refresh retry.
       });
     }, 8000);
-  } catch (_error) {
-    clearAuthAndRedirect();
+  } catch (error) {
+    const message = String(error?.message || '');
+    if (message.includes('No active session') || message.includes('Role not allowed')) {
+      clearAuthAndRedirect('session');
+      return;
+    }
+
+    const projectListEl = document.getElementById('project-list');
+    if (projectListEl) {
+      projectListEl.innerHTML = '<div class="no-tasks">Unable to load board data right now. Please refresh in a moment.</div>';
+    }
+
+    console.error('Contractor board initialization failed:', error);
   }
 }
 
