@@ -2,6 +2,27 @@ let allProjects = [];
 let allTasks = [];
 let allCrews = [];
 let selectedProjectIds = [];
+let currentManagerId = '';
+
+function getManagedProjects() {
+  return selectedProjectIds
+    .map((projectId) => allProjects.find((project) => project.id === projectId))
+    .filter(Boolean);
+}
+
+function getManagedContractorIds() {
+  return new Set(getManagedProjects().map((project) => project.ownerId).filter(Boolean));
+}
+
+function getManagedTasks() {
+  const managedProjectIds = new Set(getManagedProjects().map((project) => project.id));
+  return allTasks.filter((task) => managedProjectIds.has(task.projectId));
+}
+
+function getManagedCrews() {
+  const managedContractorIds = getManagedContractorIds();
+  return allCrews.filter((crew) => managedContractorIds.has(crew.ownerId));
+}
 
 function clearAuthAndRedirect() {
   localStorage.removeItem('authToken');
@@ -51,11 +72,13 @@ function updateSummary() {
   const countCrews = document.getElementById('count-crews');
   const countTasks = document.getElementById('count-tasks');
 
-  const contractorCount = new Set(allProjects.map((project) => project.ownerId).filter(Boolean)).size;
+  const contractorCount = getManagedContractorIds().size;
+  const crewCount = getManagedCrews().length;
+  const taskCount = getManagedTasks().length;
 
   if (countContractors) countContractors.textContent = String(contractorCount);
-  if (countCrews) countCrews.textContent = String(allCrews.length);
-  if (countTasks) countTasks.textContent = String(allTasks.length);
+  if (countCrews) countCrews.textContent = String(crewCount);
+  if (countTasks) countTasks.textContent = String(taskCount);
 }
 
 function renderSearchResults(projects) {
@@ -87,11 +110,15 @@ function renderSearchResults(projects) {
   }).join('');
 
   projectSearchResults.querySelectorAll('.add-project-btn').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const projectId = button.dataset.projectId;
       if (projectId && !selectedProjectIds.includes(projectId)) {
-        selectedProjectIds.push(projectId);
-        renderProjectList();
+        try {
+          await window.supabaseApp.addManagerProject(currentManagerId, projectId);
+          await reloadData();
+        } catch (_error) {
+          // Keep UX simple; next refresh can recover from transient failures.
+        }
       }
     });
   });
@@ -101,9 +128,9 @@ function renderProjectList() {
   const managerProjectList = document.getElementById('manager-project-list');
   if (!managerProjectList) return;
 
-  const selectedProjects = selectedProjectIds
-    .map((projectId) => allProjects.find((project) => project.id === projectId))
-    .filter(Boolean);
+  const selectedProjects = getManagedProjects();
+  const managedTasks = getManagedTasks();
+  const managedCrews = getManagedCrews();
 
   if (!selectedProjects.length) {
     managerProjectList.innerHTML = '<div class="crew-item">No projects in list yet. Search and click Add.</div>';
@@ -114,11 +141,11 @@ function renderProjectList() {
     const companyName = project.companyName || 'Unknown company';
     const locationLine = project.location ? `<div class="crew-item-subtitle">Location: ${project.location}</div>` : '';
     const createdDate = project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'Unknown';
-    const projectTasks = allTasks.filter((task) => task.projectId === project.id);
+    const projectTasks = managedTasks.filter((task) => task.projectId === project.id);
 
     const taskMarkup = projectTasks.length
       ? projectTasks.map((task) => {
-          const assignedCrew = task.crewId ? (allCrews.find((crew) => crew.id === task.crewId)?.name || 'Unknown') : 'Unassigned';
+          const assignedCrew = task.crewId ? (managedCrews.find((crew) => crew.id === task.crewId)?.name || 'Unknown') : 'Unassigned';
           const statusLabel = String(task.status || 'pending').replace('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
           return `
             <div class="crew-item" style="display:block; margin-top:10px;">
@@ -153,19 +180,26 @@ function renderProjectList() {
   }).join('');
 
   managerProjectList.querySelectorAll('.remove-project-btn').forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const projectId = button.dataset.projectId;
-      selectedProjectIds = selectedProjectIds.filter((id) => id !== projectId);
-      renderProjectList();
+      if (!projectId) return;
+      try {
+        await window.supabaseApp.removeManagerProject(currentManagerId, projectId);
+        await reloadData();
+      } catch (_error) {
+        // Keep UX simple; next refresh can recover from transient failures.
+      }
     });
   });
 }
 
 async function reloadData() {
-  const data = await window.supabaseApp.loadAllData();
+  const data = await window.supabaseApp.loadManagerData(currentManagerId);
+  selectedProjectIds = data.selectedProjectIds || [];
   allProjects = data.projects;
   allTasks = data.tasks;
   allCrews = data.crews;
+
   updateSummary();
   renderProjectList();
 }
@@ -181,17 +215,23 @@ function bindSearch() {
   }
 
   if (projectSearchForm) {
-    projectSearchForm.addEventListener('submit', (event) => {
+    projectSearchForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       const companyName = searchCompanyNameInput.value.trim().toLowerCase();
       const projectName = searchProjectNameInput.value.trim().toLowerCase();
       if (!companyName || !projectName) return;
 
-      const matches = allProjects.filter((project) => {
-        const projectCompany = String(project.companyName || '').toLowerCase();
-        const projectTitle = String(project.title || '').toLowerCase();
-        return projectCompany.includes(companyName) && projectTitle.includes(projectName);
-      });
+      let matches = [];
+      try {
+        matches = await window.supabaseApp.searchProjects(companyName, projectName);
+      } catch (_error) {
+        if (projectSearchResults) {
+          projectSearchResults.innerHTML = '<div class="no-tasks">Unable to search projects right now.</div>';
+        }
+        return;
+      }
+
+      matches = matches.filter((project) => !selectedProjectIds.includes(project.id));
 
       if (!matches.length) {
         if (projectSearchResults) {
@@ -208,6 +248,7 @@ function bindSearch() {
 async function init() {
   try {
     const { profile } = await window.supabaseApp.requireRole('manager');
+    currentManagerId = profile.id || '';
     bindHeader(profile);
     bindSearch();
     await reloadData();
