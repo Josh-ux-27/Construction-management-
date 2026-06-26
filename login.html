@@ -337,6 +337,28 @@
     const TOKEN_STORAGE_KEY = 'authToken';
     const loginParams = new URLSearchParams(window.location.search);
     const authErrorReason = loginParams.get('authError');
+    let authRequestInFlight = false;
+    let authRedirectStarted = false;
+
+    function setAuthButtonsDisabled(disabled) {
+      document.querySelectorAll('.login-button, .login-tab, #show-signup-btn, #show-signin-btn').forEach((element) => {
+        element.disabled = disabled;
+      });
+    }
+
+    async function runSingleAuthAction(action) {
+      if (authRequestInFlight || authRedirectStarted) return null;
+      authRequestInFlight = true;
+      setAuthButtonsDisabled(true);
+      try {
+        return await action();
+      } finally {
+        if (!authRedirectStarted) {
+          authRequestInFlight = false;
+          setAuthButtonsDisabled(false);
+        }
+      }
+    }
 
     function isValidEmail(email) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -418,6 +440,9 @@
     }
 
     function completeSignIn(role, foundUser) {
+      if (authRedirectStarted) return;
+      authRedirectStarted = true;
+
       const sessionId = crypto.randomUUID();
       const user = {
         id: foundUser.id,
@@ -453,7 +478,7 @@
         return;
       }
 
-      try {
+      await runSingleAuthAction(async () => {
         const result = await window.supabaseApp.signInWithRole({ role, email: normalizedEmail, password });
         if (result.profile.role !== role) {
           await window.supabaseApp.signOut();
@@ -466,9 +491,9 @@
           return;
         }
         completeSignIn(result.profile.role, result.profile);
-      } catch (e) {
+      }).catch((e) => {
         showError(errorDiv, e.message || 'Invalid email or password');
-      }
+      });
     }
 
     async function handleContractorLogin(event) {
@@ -534,7 +559,8 @@
         return;
       }
 
-      window.supabaseApp.signUpWithRole({ role, company, email, password }).then((result) => {
+      runSingleAuthAction(async () => {
+        const result = await window.supabaseApp.signUpWithRole({ role, company, email, password });
         createForm.reset();
         if (!result.session) {
           showError(errorDiv, 'Account created. Please check your email confirmation settings or sign in again.');
@@ -553,7 +579,8 @@
         return;
       }
 
-      window.supabaseApp.restoreSession().then((result) => {
+      runSingleAuthAction(async () => {
+        const result = await window.supabaseApp.restoreSession();
         if (!result) return;
         completeSignIn(result.profile.role, result.profile);
       }).catch(() => {
