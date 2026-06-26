@@ -335,6 +335,8 @@
   <script src="supabase-client.js"></script>
   <script>
     const TOKEN_STORAGE_KEY = 'authToken';
+    const loginParams = new URLSearchParams(window.location.search);
+    const authErrorReason = loginParams.get('authError');
 
     function isValidEmail(email) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -544,6 +546,11 @@
     }
 
     function checkExistingLogin() {
+      if (authErrorReason) {
+        window.history.replaceState({}, document.title, 'login.html');
+        return;
+      }
+
       window.supabaseApp.restoreSession().then((result) => {
         if (!result) return;
         completeSignIn(result.profile.role, result.profile);
