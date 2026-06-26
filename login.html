@@ -428,8 +428,10 @@
         sessionId,
       };
 
-      localStorage.setItem(TOKEN_STORAGE_KEY, 'supabase-session');
-      localStorage.setItem('currentUser', JSON.stringify(user));
+      sessionStorage.setItem(TOKEN_STORAGE_KEY, 'supabase-session');
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem('currentUser');
       localStorage.removeItem('savedUser');
       localStorage.removeItem('lastLogoutTime');
       sessionStorage.setItem('currentSessionId', sessionId);
@@ -556,6 +558,7 @@
         completeSignIn(result.profile.role, result.profile);
       }).catch(() => {
         localStorage.removeItem(TOKEN_STORAGE_KEY);
+        sessionStorage.removeItem(TOKEN_STORAGE_KEY);
       });
     }
 
